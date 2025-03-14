@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:midterm_practice/model/profile_model.dart';
 import 'package:midterm_practice/repository/profile_repository.dart';
 
 class AuthService {
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final _profileRepository = ProfileRepository();
 
   Future<(bool, String?)> register({
@@ -12,11 +12,11 @@ class AuthService {
   }) async {
     try {
       // Auth
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      await _firebaseAuth.createUserWithEmailAndPassword(
           email: profile.email, password: profile.password);
 
       // Firestore
-      await ProfileRepository().createProfile(profile);
+      await _profileRepository.createProfile(profile);
       return (true, null);
     } on FirebaseAuthException catch (e) {
       String message;
@@ -62,9 +62,54 @@ class AuthService {
     }
   }
 
-  Future<void> signout({
-    required BuildContext context
-  }) async {
-    await FirebaseAuth.instance.signOut();
+  Future<(bool, String?)> signout() async {
+    try {
+      // Sign out from Firebase
+      await _firebaseAuth.signOut();
+
+      // Sign out from Google
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.signOut();
+      }
+      return (true, null);
+    } catch (e) {
+      print('Error during sign out: $e');
+      return (false, 'Failed to sign out: ${e.toString()}');
+    }
+  }
+
+  Future<(bool, String?, UserCredential?)> signInWithGoogle() async {
+    try {
+      // Start Google Sign In process
+      final GoogleSignInAccount? gUser = await GoogleSignIn().signIn();
+
+      // User canceled the sign-in
+      if (gUser == null) {
+        return (false, 'Sign in canceled by user', null);
+      }
+
+      // Get auth details
+      final GoogleSignInAuthentication gAuth = await gUser.authentication;
+
+      // Create credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: gAuth.accessToken,
+        idToken: gAuth.idToken,
+      );
+
+      // Sign in to Firebase
+      final userCredential =
+          await _firebaseAuth.signInWithCredential(credential);
+      return (true, null, userCredential);
+    } on FirebaseAuthException catch (e) {
+      String message = 'Google sign in failed: ${e.message}';
+      print(message);
+      return (false, message, null);
+    } catch (e) {
+      String message = 'Unexpected error during Google sign in: $e';
+      print(message);
+      return (false, message, null);
+    }
   }
 }

@@ -11,6 +11,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   User? _currentUser;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -20,19 +21,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _logout() async {
     try {
-      AuthService().signout(context: context);
+      setState(() => _isLoading = true);
+
+      final (success, message) = await AuthService().signout();
+
       if (!mounted) return;
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Successfully logged out'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      // Navigate to login screen
-      Navigator.pushReplacementNamed(context, '/');
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully logged out'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pushReplacementNamed(context, '/');
+      } else if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -41,6 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -52,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: _logout,
+            onPressed: _isLoading ? null : _logout,
           ),
         ],
       ),

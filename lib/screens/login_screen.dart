@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:midterm_practice/services/auth_service.dart';
 
@@ -22,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() async {
+  Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -54,6 +55,70 @@ class _LoginScreenState extends State<LoginScreen> {
             _isLoading = false;
           });
         }
+      }
+    }
+  }
+
+  void _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final (success, message, userCredential) =
+          await AuthService().signInWithGoogle();
+      final User? user = userCredential!.user;
+
+      if (!mounted) return;
+
+      if (success && user != null) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          final additionalInfo = userCredential.additionalUserInfo;
+          final bool isNewUser = additionalInfo?.isNewUser ?? false;
+
+          // Show loading message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Checking account details...'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 1),
+            ),
+          );
+          if (isNewUser) {
+            // Redirect to Set Password screen
+            if (mounted) {
+              Navigator.pushReplacementNamed(context, '/set-details',
+                  arguments: user);
+            }
+          } else {
+            // Existing user, go to Home Screen
+            if (mounted) {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
+          }
+        }
+      } else if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -204,9 +269,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(width: 16),
                       IconButton(
                         icon: const Icon(Icons.g_mobiledata, size: 32),
-                        onPressed: () {
-                          // Implement Google Sign In
-                        },
+                        onPressed: _signInWithGoogle,
                       ),
                       IconButton(
                         icon: const Icon(Icons.facebook, size: 28),
