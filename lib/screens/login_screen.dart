@@ -30,7 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         final (success, message) = await AuthService().login(
             email: _emailController.text, password: _passwordController.text);
-        await Future.delayed(const Duration(seconds: 2));
         // Navigate to home screen after successful login
         if (success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

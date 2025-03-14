@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:midterm_practice/model/profile_model.dart';
 import 'package:midterm_practice/services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -13,6 +14,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _ageController = TextEditingController();
+
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
@@ -22,6 +27,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 
@@ -31,11 +39,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _isLoading = true;
       });
       try {
-        final (success, message) = await AuthService().register(
+        final profile = ProfileModel(
+          firstName: _firstNameController.text,
+          lastName: _lastNameController.text,
           email: _emailController.text,
           password: _passwordController.text,
+          age: int.parse(_ageController.text), // Initial value for new users
         );
-        await Future.delayed(const Duration(seconds: 2));
+        final (success, message) =
+            await AuthService().register(profile: profile);
         // Navigate back to login screen after successful registration
         if (success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -100,6 +112,69 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
+
+                  TextFormField(
+                    controller: _firstNameController,
+                    decoration: InputDecoration(
+                      labelText: 'First Name',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your first name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+// Last Name Field
+                  TextFormField(
+                    controller: _lastNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Last Name',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your last name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+// Age Field
+                  TextFormField(
+                    controller: _ageController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Age',
+                      prefixIcon: const Icon(Icons.calendar_today),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your age';
+                      }
+                      if (int.tryParse(value) == null) {
+                        return 'Please enter a valid age';
+                      }
+                      if (int.parse(value) < 18) {
+                        return 'You must be at least 18 years old';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
                   // Email Field
                   TextFormField(
