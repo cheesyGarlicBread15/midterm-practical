@@ -257,7 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Welcome Text
                   Text(
-                    'Welcome Back',
+                    'WELCOME',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -336,7 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: null,
+                      onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
                       child: const Text('Forgot Password?'),
                     ),
                   ),

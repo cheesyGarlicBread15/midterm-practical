@@ -310,7 +310,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       children: [
                         const Text('Already have an account?'),
                         TextButton(
-                          onPressed: () => Navigator.pushNamed(context, '/'),
+                          onPressed: () => Navigator.pushReplacementNamed(context, '/'),
                           child: const Text('Login'),
                         ),
                       ],

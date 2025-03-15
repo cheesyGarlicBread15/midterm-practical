@@ -93,65 +93,110 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showDeleteDialog(ProfileModel profile) {
-    showDialog<bool>(
+    final TextEditingController passwordController = TextEditingController();
+    bool isPasswordIncorrect = false;
+
+    showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete User'),
-        content: Text(
-            'Are you sure you want to delete ${profile.firstName} ${profile.lastName}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('CANCEL'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(
-              'DELETE',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Delete User'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Are you sure you want to delete ${profile.firstName} ${profile.lastName}?',
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      errorText: isPasswordIncorrect ? 'Incorrect password' : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('CANCEL'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    try {
+                      // Authenticate using the target user's credentials
+                      UserCredential userCredential = await FirebaseAuth
+                          .instance
+                          .signInWithEmailAndPassword(
+                        email: profile.email, // Target user's email
+                        password: passwordController.text, // Entered password
+                      );
+
+                      // If sign-in is successful, close dialog and proceed with deletion
+                      Navigator.pop(dialogContext, true);
+                    } catch (e) {
+                      // If authentication fails, show error message
+                      setDialogState(() => isPasswordIncorrect = true);
+                    }
+                  },
+                  child:
+                      const Text('DELETE', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     ).then((confirmed) async {
       if (confirmed ?? false) {
         setState(() => _isLoading = true);
-
         try {
           final auth = FirebaseAuth.instance;
           final firestore = FirebaseFirestore.instance;
           final User? originalUser = auth.currentUser;
 
-          if (originalUser == null) {
+          if (originalUser == null)
             throw Exception("No user is currently logged in.");
-          }
 
           final String originalEmail = _currentProfile!.email;
-          final String originalPassword =
-              _currentProfile!.password;
-          
+          final String originalPassword = _currentProfile!.password;
+
           // Sign out the current user
           await auth.signOut();
 
-          final String targetUserPassword =
-              profile.password;
-
-          // Sign in as the target user
+          // Sign in as the target user to delete
           final UserCredential targetUserCredential =
               await auth.signInWithEmailAndPassword(
             email: profile.email,
-            password: targetUserPassword,
+            password: passwordController.text,
           );
 
           final User targetUser = targetUserCredential.user!;
 
-          // Delete the profile from firestore
+          // Delete profile from Firestore
           await firestore.collection('Profiles').doc(profile.id).delete();
 
-          // Delete the user from Firebase Auth
+          // Delete user from Firebase Auth
           await targetUser.delete();
 
-          // Sign back in as the original user
+          // Sign back in as original user
           await auth.signInWithEmailAndPassword(
             email: originalEmail,
             password: originalPassword,

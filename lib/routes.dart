@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:midterm_practice/model/profile_model.dart';
+import 'package:midterm_practice/screens/forgot_password_screen.dart';
 import 'package:midterm_practice/screens/home_screen.dart';
 import 'package:midterm_practice/screens/login_screen.dart';
 import 'package:midterm_practice/screens/profile_screen.dart';
@@ -29,6 +30,8 @@ class AppRoutes {
         if (args is ProfileModel) {
           return MaterialPageRoute(builder: (context) => ProfileScreen(profileModel: args,));
         }
+      case '/forgot-password':
+        return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
       default:
         return null;
     }
