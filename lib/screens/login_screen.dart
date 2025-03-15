@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:midterm_practice/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -178,6 +179,61 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _signInWithGitHub() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final (success, message, userCredential) =
+          await AuthService().signInWithGithub();
+      final User? user = userCredential!.user;
+
+      if (!mounted) return;
+
+      if (success && user != null) {
+        final additionalInfo = userCredential.additionalUserInfo;
+        final bool isNewUser = additionalInfo?.isNewUser ?? false;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Checking account details...'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 1),
+          ),
+        );
+
+        if (isNewUser) {
+          Navigator.pushReplacementNamed(context, '/set-details',
+              arguments: user);
+        } else {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } else if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -280,9 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/reset-email-password');
-                      },
+                      onPressed: null,
                       child: const Text('Forgot Password?'),
                     ),
                   ),
@@ -316,19 +370,35 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Social Login Options (optional)
+                  // Social Login Options
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text('Or sign in with:'),
                       const SizedBox(width: 16),
                       IconButton(
-                        icon: const Icon(Icons.g_mobiledata, size: 32),
+                        icon: const Icon(
+                          Icons.g_mobiledata,
+                          size: 32,
+                          color: Colors.green,
+                        ),
                         onPressed: _signInWithGoogle,
                       ),
                       IconButton(
-                        icon: const Icon(Icons.facebook, size: 28),
+                        icon: const Icon(
+                          Icons.facebook,
+                          size: 32,
+                          color: Colors.blue,
+                        ),
                         onPressed: _signInWithFacebook,
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          FontAwesome.github,
+                          size: 32,
+                          color: Colors.black,
+                        ),
+                        onPressed: _signInWithGitHub,
                       ),
                     ],
                   ),

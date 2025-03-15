@@ -58,7 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           );
           if (widget.addUser) {
-            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.pop(context);
           } else {
             Navigator.pushReplacementNamed(context, '/');
           }
@@ -304,16 +304,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 24),
 
                   // Login Link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Already have an account?'),
-                      TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/'),
-                        child: const Text('Login'),
-                      ),
-                    ],
-                  ),
+                  if (!widget.addUser)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Already have an account?'),
+                        TextButton(
+                          onPressed: () => Navigator.pushNamed(context, '/'),
+                          child: const Text('Login'),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),

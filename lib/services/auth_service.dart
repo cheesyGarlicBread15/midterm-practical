@@ -129,6 +129,7 @@ class AuthService {
 
   Future<(bool, String?, UserCredential?)> signInWithFacebook() async {
     try {
+      await FacebookAuth.instance.logOut();
       final LoginResult result = await FacebookAuth.instance.login();
 
       if (result.status == LoginStatus.success) {
@@ -150,6 +151,25 @@ class AuthService {
       String message = 'Unexpected error during Facebook sign in: $e';
       print(message);
       return (false, message, null);
+    }
+  }
+
+  Future<(bool, String?, UserCredential?)> signInWithGithub() async {
+    try {
+      await _firebaseAuth.signOut();
+
+      // Create a GitHub auth provider
+      GithubAuthProvider githubAuthProvider = GithubAuthProvider();
+
+      // Sign in with GitHub
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithProvider(githubAuthProvider);
+
+      return (true, null, userCredential);
+    } on FirebaseAuthException catch (e) {
+      return (false, e.message, null);
+    } catch (e) {
+      return (false, 'Unexpected error during GitHub sign in: $e', null);
     }
   }
 }
