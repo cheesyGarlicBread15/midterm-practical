@@ -1,14 +1,74 @@
 import 'package:flutter/material.dart';
 import 'package:midterm_practice/model/profile_model.dart';
+import 'package:midterm_practice/repository/profile_repository.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final ProfileModel profileModel;
   const ProfileScreen({super.key, required this.profileModel});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool isEditing = false;
+  late TextEditingController firstNameController;
+  late TextEditingController lastNameController;
+  late TextEditingController ageController;
+  final ProfileRepository _profileRepository = ProfileRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    firstNameController =
+        TextEditingController(text: widget.profileModel.firstName);
+    lastNameController =
+        TextEditingController(text: widget.profileModel.lastName);
+    ageController =
+        TextEditingController(text: widget.profileModel.age.toString());
+  }
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    ageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _updateProfile() async {
+    final updatedData = {
+      'first_name': firstNameController.text,
+      'last_name': lastNameController.text,
+      'age': int.tryParse(ageController.text) ?? widget.profileModel.age,
+    };
+
+    try {
+      await _profileRepository.updateProfile(
+          widget.profileModel.id!, updatedData);
+      setState(() {
+        isEditing = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update profile: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   Widget _buildDetailRow({
     required IconData icon,
     required String label,
-    required String value,
+    required Widget valueWidget,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -28,12 +88,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 16,
-                  ),
-                ),
+                valueWidget,
               ],
             ),
           ),
@@ -48,6 +103,32 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Profile'),
         centerTitle: true,
+        actions: [
+          if (isEditing)
+            IconButton(
+              icon: const Icon(Icons.cancel),
+              onPressed: () {
+                setState(() {
+                  isEditing = false;
+                  firstNameController.text = widget.profileModel.firstName;
+                  lastNameController.text = widget.profileModel.lastName;
+                  ageController.text = widget.profileModel.age.toString();
+                });
+              },
+            ),
+          IconButton(
+            icon: Icon(isEditing ? Icons.check : Icons.edit),
+            onPressed: () {
+              if (isEditing) {
+                _updateProfile();
+              } else {
+                setState(() {
+                  isEditing = true;
+                });
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -55,12 +136,11 @@ class ProfileScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
-            // Profile Avatar
             CircleAvatar(
               radius: 50,
               backgroundColor: Theme.of(context).primaryColor,
               child: Text(
-                profileModel.firstName[0].toUpperCase(),
+                widget.profileModel.firstName[0].toUpperCase(),
                 style: const TextStyle(
                   fontSize: 40,
                   color: Colors.white,
@@ -68,21 +148,18 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            // Full Name
             Text(
-              '${profileModel.firstName} ${profileModel.lastName}',
+              '${widget.profileModel.firstName} ${widget.profileModel.lastName}',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
-            // Email
             Text(
-              profileModel.email,
+              widget.profileModel.email,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Colors.grey[600],
                   ),
             ),
             const SizedBox(height: 32),
-            // Details Card
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -91,25 +168,37 @@ class ProfileScreen extends StatelessWidget {
                     _buildDetailRow(
                       icon: Icons.person,
                       label: 'First Name',
-                      value: profileModel.firstName,
+                      valueWidget: isEditing
+                          ? TextField(controller: firstNameController)
+                          : Text(firstNameController.text,
+                              style: const TextStyle(fontSize: 16)),
                     ),
                     const Divider(),
                     _buildDetailRow(
                       icon: Icons.person_outline,
                       label: 'Last Name',
-                      value: profileModel.lastName,
+                      valueWidget: isEditing
+                          ? TextField(controller: lastNameController)
+                          : Text(lastNameController.text,
+                              style: const TextStyle(fontSize: 16)),
                     ),
                     const Divider(),
                     _buildDetailRow(
                       icon: Icons.email_outlined,
                       label: 'Email',
-                      value: profileModel.email,
+                      valueWidget: Text(widget.profileModel.email,
+                          style: const TextStyle(fontSize: 16)),
                     ),
                     const Divider(),
                     _buildDetailRow(
                       icon: Icons.calendar_today,
                       label: 'Age',
-                      value: '${profileModel.age} years',
+                      valueWidget: isEditing
+                          ? TextField(
+                              controller: ageController,
+                              keyboardType: TextInputType.number)
+                          : Text('${ageController.text} years',
+                              style: const TextStyle(fontSize: 16)),
                     ),
                   ],
                 ),

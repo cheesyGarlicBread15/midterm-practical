@@ -123,6 +123,61 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _signInWithFacebook() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final (success, message, userCredential) =
+          await AuthService().signInWithFacebook();
+      final User? user = userCredential!.user;
+
+      if (!mounted) return;
+
+      if (success && user != null) {
+        final additionalInfo = userCredential.additionalUserInfo;
+        final bool isNewUser = additionalInfo?.isNewUser ?? false;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Checking account details...'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 1),
+          ),
+        );
+
+        if (isNewUser) {
+          Navigator.pushReplacementNamed(context, '/set-details',
+              arguments: user);
+        } else {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } else if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -273,9 +328,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.facebook, size: 28),
-                        onPressed: () {
-                          // Implement Facebook Sign In
-                        },
+                        onPressed: _signInWithFacebook,
                       ),
                     ],
                   ),

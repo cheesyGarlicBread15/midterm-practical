@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       setState(() => _isLoading = true);
 
-      final (success, message) = await AuthService().signout();
+      final (success, message) = await AuthService().logout();
 
       if (!mounted) return;
 
@@ -246,16 +246,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text('${profile.age} years'),
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/edit-profile',
-                                      arguments: profile,
-                                    );
-                                  },
-                                ),
                                 IconButton(
                                   icon: const Icon(
                                     Icons.delete,

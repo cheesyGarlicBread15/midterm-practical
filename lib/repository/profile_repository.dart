@@ -9,7 +9,7 @@ class ProfileRepository {
       await _db.collection('Profiles').add(profileModel.toJsonForCreate());
     } catch (error) {
       print('Error creating profile: $error');
-      rethrow; // Rethrow to handle in AuthService
+      rethrow;
     }
   }
 
@@ -25,10 +25,19 @@ class ProfileRepository {
         await _db.collection('Profiles').where('email', isEqualTo: email).get();
 
     if (snapshot.docs.isEmpty) {
-      return null; // Return null if no profile is found
+      return null;
     }
 
     return ProfileModel.toModel(snapshot.docs.first);
+  }
+
+  Future<void> updateProfile(String profileId, Map<String, dynamic> updatedData) async {
+    try {
+      await _db.collection('Profiles').doc(profileId).update(updatedData);
+    } catch (error) {
+      print('Error updating profile: $error');
+      rethrow;
+    }
   }
 
   Future<void> deleteProfile(String profileId) async {
