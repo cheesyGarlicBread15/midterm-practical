@@ -6,17 +6,23 @@ import 'package:midterm_practice/repository/profile_repository.dart';
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final _profileRepository = ProfileRepository();
+  static String? currentEmail, currentPassword;
 
   Future<(bool, String?)> register({
     required ProfileModel profile,
   }) async {
     try {
       // Auth
-      await _firebaseAuth.createUserWithEmailAndPassword(
+      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
           email: profile.email, password: profile.password);
 
+      // Add uid to profile
+      final updatedProfile = profile.copyWith(
+        uid: userCredential.user?.uid, // Get uid from auth
+      );
+
       // Firestore
-      await _profileRepository.createProfile(profile);
+      await _profileRepository.createProfile(updatedProfile);
       return (true, null);
     } on FirebaseAuthException catch (e) {
       String message;

@@ -3,7 +3,8 @@ import 'package:midterm_practice/model/profile_model.dart';
 import 'package:midterm_practice/services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final bool addUser;
+  const RegisterScreen({super.key, required this.addUser});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -56,7 +57,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pushReplacementNamed(context, '/');
+          if (widget.addUser) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else {
+            Navigator.pushReplacementNamed(context, '/');
+          }
         } else if (message != null) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(

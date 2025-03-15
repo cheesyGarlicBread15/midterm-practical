@@ -50,7 +50,7 @@ class _SetDetailsScreenState extends State<SetDetailsScreen> {
 
       await widget.user.linkWithCredential(emailCredential);
 
-      // Then create profile in Firestore
+      // Then create profile in Firestore, do not use auth_service register since it Auth account is 'registered' via linkWithCredential
       final profile = ProfileModel(
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
@@ -59,8 +59,11 @@ class _SetDetailsScreenState extends State<SetDetailsScreen> {
         age: int.parse(_ageController.text),
       );
 
-      // Use ProfileRepository directly instead of AuthService.register
-      await ProfileRepository().createProfile(profile);
+      final updatedProfile = profile.copyWith(
+        uid: widget.user.uid,
+      );
+
+      await ProfileRepository().createProfile(updatedProfile);
 
       if (!mounted) return;
 

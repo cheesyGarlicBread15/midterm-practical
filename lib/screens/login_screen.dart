@@ -226,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        // Add navigation to forgot password screen
+                        Navigator.pushNamed(context, '/reset-email-password');
                       },
                       child: const Text('Forgot Password?'),
                     ),
